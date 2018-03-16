@@ -5,6 +5,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import time
+
 
 def test_camera_calibration(path, mtx, dist):
     """
@@ -73,6 +75,35 @@ def test_warping(path, M, mtx, dist):
             ax2.set_title('Warped Image', fontsize=50)
             plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
             plt.show()
+
+
+def test_features_prep(veh_dir, non_veh_dir):
+    """
+    @brief test various feature sets with kinear SVM C=10
+    """
+    for color_space in ('RGB', 'HSV', 'LUV', 'HLS', 'YUV'):
+        for hog_channel in (0, 1, 2, 'ALL'):
+            t1 = time.time()
+            X_train, y_train, X_test, y_test = helpers.prepareData(veh_dir, non_veh_dir, color_space=color_space, hog_channel=hog_channel)
+            t2 = time.time()
+            clf = helpers.prepare_svm(X_train, y_train, X_test, y_test, kernel='linear', C=10)
+            t3 = time.time()
+            print(t3 - t2, t2 - t1, hog_channel, color_space)
+
+
+def test_data_prep(veh_dir, non_veh_dir):
+    """
+    @brief test of data preparation functions
+    """
+    t1 = time.time()
+    #X_train, y_train, X_test, y_test = helpers.prepareData(veh_dir, non_veh_dir, color_space='HLS', hog_channel='ALL')
+    X_train, y_train, X_test, y_test = helpers.prepareData(veh_dir, non_veh_dir, color_space='HSV', hog_channel=2)
+    t2 = time.time()
+    print(t2 - t1)
+    clf = helpers.prepare_svm(X_train, y_train, X_test, y_test)
+    #clf = helpers.choose_svm(X_train, y_train, X_test, y_test)
+    t3 = time.time()
+    print(t3 - t2)
 
 
 def test_make_pipeline(path, M, Minv, mtx, dist):
