@@ -318,7 +318,7 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient=12, pix_per_cell=
             test_features = X_scaler.transform(hog_features.reshape(1, -1))
             test_prediction = svc.predict(test_features)
 
-            if test_prediction == 1 or True:
+            if test_prediction == 1:
                 xbox_left = np.int(xleft*scale)
                 ytop_draw = np.int(ytop*scale)
                 win_draw = np.int(window*scale)

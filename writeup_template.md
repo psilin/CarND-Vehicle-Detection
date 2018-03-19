@@ -196,7 +196,7 @@ data along with scaler data was stored in `model.sv` file that was later used in
 #### 1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
 I ended up using 9 raws of sliding windows. I took into consideration a notion of perspective and searched for faraway cars with smaller windows near the top of part of image that contains road. Then I used larger windows to search for closer cars.
-Here is the bunch of images describing all raws of windows that I used. Under each image corresponding parameters `ystrat`, `ystop` and `scale` of raw of windows are situated.
+Here is the bunch of images describing all raws of windows that I used. Images were made with help of `visualize_windows()` function in `test_utils.oy` file. Under each image corresponding parameters `ystrat`, `ystop` and `scale` of raw of windows are situated.
 
 ![alt text][image13]
 
