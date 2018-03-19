@@ -117,3 +117,74 @@ def test_find_cars(test_img_dir, cspace):
         plt.show()
 
 
+def visualize_hog():
+    '''
+    @brief visualizes HOG features
+    '''
+    files = ['./../examples/car_image1.png', './../examples/car_image2.png', './../examples/car_image3.png',\
+        './../examples/non_car_image1.png', './../examples/non_car_image2.png', './../examples/non_car_image3.png']
+    for file in files:
+        image = cv2.imread(file)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+        ch1 = image[:,:,0]
+        ch2 = image[:,:,1]
+        ch3 = image[:,:,2]
+
+        hog1, im1 = helpers.get_hog_features(ch1, orient=12, pix_per_cell=16, cell_per_block=2, vis=True, feature_vec=False)
+        hog2, im2 = helpers.get_hog_features(ch2, orient=12, pix_per_cell=16, cell_per_block=2, vis=True, feature_vec=False)
+        hog3, im3 = helpers.get_hog_features(ch3, orient=12, pix_per_cell=16, cell_per_block=2, vis=True, feature_vec=False)
+
+        f, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(2, 3, figsize=(24, 9))
+        f.tight_layout()
+        ax1.imshow(ch1, cmap='gray')
+        ax1.set_title('Original image channel H', fontsize=10)
+        ax2.imshow(ch2, cmap='gray')
+        ax2.set_title('Original image channel S', fontsize=10)
+        ax3.imshow(ch3, cmap='gray')
+        ax3.set_title('Original image channel V', fontsize=10)
+        ax4.imshow(im1, cmap='gray')
+        ax4.set_title('HOG features channel H', fontsize=10)
+        ax5.imshow(im2, cmap='gray')
+        ax5.set_title('HOG features channel S', fontsize=10)
+        ax6.imshow(im3, cmap='gray')
+        ax6.set_title('HOG features channel V', fontsize=10)
+
+        plt.subplots_adjust(left=0, right=1, top=0.95, bottom=0.05)
+        plt.show()
+
+
+def visualize_windows():
+    '''
+    @brief shows all possible windows
+    '''
+
+    model, X_scaler = pickle.load(open('model.sv', 'rb'))
+    files = ['./../test_images/test1.jpg']
+
+    for file in files:
+        image = cv2.imread(file)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+        rectangles_list = []
+        #rectangles_list.append(helpers.find_cars(image, 400, 464, 1., model, X_scaler))
+        #rectangles_list.append(helpers.find_cars(image, 416, 480, 1., model, X_scaler))
+        #rectangles_list.append(helpers.find_cars(image, 400, 480, 1.25, model, X_scaler))
+        #rectangles_list.append(helpers.find_cars(image, 400, 496, 1.5, model, X_scaler))
+        #rectangles_list.append(helpers.find_cars(image, 432, 528, 1.5, model, X_scaler))
+        #rectangles_list.append(helpers.find_cars(image, 432, 560, 2, model, X_scaler))
+        #rectangles_list.append(helpers.find_cars(image, 464, 592, 2, model, X_scaler))
+        #rectangles_list.append(helpers.find_cars(image, 432, 624, 3, model, X_scaler))
+        rectangles_list.append(helpers.find_cars(image, 400, 656, 4, model, X_scaler))
+
+        rect = [rects for rectangles in rectangles_list for rects in rectangles]
+
+        for rectangle in rect:
+            cv2.rectangle(image,rectangle[0],rectangle[1],(0,0,255),6)
+
+        plt.imshow(image)
+        plt.title('windows')
+        plt.show()
+
+
+

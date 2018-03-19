@@ -10,6 +10,8 @@ def run():
     """
     @brief main entry point uses pipeline to process given video
     """
+    #test_utils.visualize_hog()
+    #test_utils.visualize_windows()
 
     #test_utils.test_data_prep('./../vehicles', './../non-vehicles', 'HSV')
     #test_utils.test_features_prep('./../vehicles', './../non-vehicles')
