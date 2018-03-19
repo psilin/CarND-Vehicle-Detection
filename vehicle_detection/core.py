@@ -11,18 +11,14 @@ def run():
     @brief main entry point uses pipeline to process given video
     """
 
+    #test_utils.test_data_prep('./../vehicles', './../non-vehicles', 'HSV')
+    #test_utils.test_features_prep('./../vehicles', './../non-vehicles')
+    #test_utils.test_find_cars('./../test_images', 'HSV')
+
     ret, mtx, dist = helpers.calibrateCamera('./../camera_cal/')
     #test_utils.test_camera_calibration('./../camera_cal/', mtx, dist)
-    M, Minv = helpers.warp_matrix()
 
-    #test_utils.test_data_prep('./../vehicles', './../non-vehicles', 'HLS')
-    #test_utils.test_features_prep('./../vehicles', './../non-vehicles')
-    #test_utils.test_find_cars('./../test_images', 'YUV')
-
-    #test_utils.test_warping('./../test_images', M, mtx, dist)
-    #test_utils.test_make_pipeline('./../test_images', M, Minv, mtx, dist)
-
-    pipeline = helpers.make_pipeline(M, Minv, mtx, dist, 'HLS')
+    pipeline = helpers.make_pipeline(mtx, dist, 'HSV')
 
     output_file = './../output_project_video.mp4'
     clip1 = VideoFileClip('./../project_video.mp4')

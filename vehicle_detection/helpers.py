@@ -13,6 +13,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 
+
 class RingBuffer:
     """
     @brief has some memory of found recatngles through length last frames
@@ -64,24 +65,6 @@ def calibrateCamera(path):
     return ret, mtx, dist
 
 
-def warp_matrix():
-    """
-    @brief get warp matrix
-    """
-    p1 = (315, 650)
-    p2 = (1005, 650)
-    p3 = (525, 500)
-    p4 = (765, 500)
-
-    src = np.float32([p1, p2, p3, p4])
-    dst = np.float32([p1, p2, (p1[0], 360), (p2[0], 360)])
-
-    img_size = (1280, 720)
-    M = cv2.getPerspectiveTransform(src, dst)
-    Minv = cv2.getPerspectiveTransform(dst, src)
-    return M, Minv
-
-
 # Define a function to compute binned color features  
 def bin_spatial(img, size=(32, 32)):
     # Use cv2.resize().ravel() to create the feature vector
@@ -104,7 +87,7 @@ def color_hist(img, nbins=32, bins_range=(0, 256)):
 
 # Define a function to extract features from a list of images
 # Have this function call bin_spatial() and color_hist()
-def extract_color_features(imgs, cspace='YUV', spatial_size=(8, 8), hist_bins=32, hist_range=(0, 256)):
+def extract_color_features(imgs, cspace, spatial_size=(8, 8), hist_bins=32, hist_range=(0, 256)):
     # Create a list to append feature vectors to
     features = []
     # Iterate through the list of images
@@ -155,7 +138,7 @@ def get_hog_features(img, orient, pix_per_cell, cell_per_block, vis=False, featu
 
 # Define a function to extract features from a list of images
 # Have this function call bin_spatial() and color_hist()
-def extract_hog_features(imgs, cspace='YUV', orient=9, pix_per_cell=16, cell_per_block=2, hog_channel='ALL'):
+def extract_hog_features(imgs, cspace, orient=12, pix_per_cell=16, cell_per_block=2, hog_channel='ALL'):
     # Create a list to append feature vectors to
     features = []
     # Iterate through the list of images
@@ -272,9 +255,7 @@ def prepare_svm(X_train, y_train, X_test, y_test, X_scaler, kernel='linear', C=1
 # Define a single function that can extract features using hog sub-sampling and make predictions (img=cv2.imread(...))
 def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient=12, pix_per_cell=16, cell_per_block=2, spatial_size=(8, 8), hist_bins=32):
     """
-    @brief
-      ystart = 400
-      ystop = 656
+    @brief fing cars with sliding window, ystart = 400, ystop = 656
     """
 
     ctrans_tosearch = img[ystart:ystop,:,:]
@@ -306,7 +287,7 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient=12, pix_per_cell=
     rectangles = []
     for xb in range(nxsteps):
         for yb in range(nysteps):
-            t1 = time.time()
+            #t1 = time.time()
             ypos = yb*cells_per_step
             xpos = xb*cells_per_step
             # Extract HOG for this patch
@@ -318,22 +299,22 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient=12, pix_per_cell=
             xleft = xpos*pix_per_cell
             ytop = ypos*pix_per_cell
 
-            t2 = time.time()
+            #t2 = time.time()
             # Extract the image patch
-            #subimg = cv2.resize(ctrans_tosearch[ytop:ytop+window, xleft:xleft+window], (64,64))
+            ##subimg = cv2.resize(ctrans_tosearch[ytop:ytop+window, xleft:xleft+window], (64,64))
 
             # Get color features
-            #spatial_features = bin_spatial(subimg, size=spatial_size)
-            #hist_features = color_hist(subimg, nbins=hist_bins)
+            ##spatial_features = bin_spatial(subimg, size=spatial_size)
+            ##hist_features = color_hist(subimg, nbins=hist_bins)
 
             # Scale features and make a prediction
             #test_features = np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1)
-            t3 = time.time()
+            #t3 = time.time()
 
-            #test_features = X_scaler.transform(np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1))
-            t4 = time.time()
+            ##test_features = X_scaler.transform(np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1))
+            #t4 = time.time()
             #test_features = X_scaler.transform(np.hstack((shape_feat, hist_feat)).reshape(1, -1))
-            t5 = time.time()
+            #t5 = time.time()
             test_features = X_scaler.transform(hog_features.reshape(1, -1))
             test_prediction = svc.predict(test_features)
 
@@ -343,7 +324,7 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient=12, pix_per_cell=
                 win_draw = np.int(window*scale)
                 rectangles.append(((xbox_left, ytop_draw + ystart),(xbox_left + win_draw, ytop_draw + win_draw + ystart)))
                 #cv2.rectangle(draw_img,(xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart),(0,0,255),6) 
-            t6 = time.time()
+            #t6 = time.time()
             #print(xb, yb, t6-t5,t5-t4,t4-t3,t3-t2,t2-t1)
 
     return rectangles
@@ -383,17 +364,17 @@ def draw_labeled_bboxes(img, labels):
     return img
 
 
-def make_pipeline(M, Minv, mtx, dist, cspace):
+def make_pipeline(mtx, dist, cspace):
     """
     @brief pipeline closure
     """
-    model, X_scaler = pickle.load(open('modelHLS.sv', 'rb'))
+    model, X_scaler = pickle.load(open('model.sv', 'rb'))
 
-    ring = RingBuffer(24)
+    ring = RingBuffer(8)
 
     def pipeline(img):
         """
-        @brief pipeline takes RGB img returns RGB img with line
+        @brief pipeline: undistrot img -> conver color space -> window search -> heat map with threshold -> draw resulting boxes
         """
         #undistorted = img
         undistorted = cv2.undistort(img, mtx, dist, None, mtx)
@@ -412,16 +393,14 @@ def make_pipeline(M, Minv, mtx, dist, cspace):
                 feature_image = cv2.cvtColor(undistorted, cv2.COLOR_RGB2BGR)
         else:
             feature_image = np.copy(undistorted)
+
         rectangles_list = []
-        rectangles_list.append(find_cars(feature_image, 400, 464, 1., model, X_scaler))
+        rectangles_list.append(find_cars(feature_image, 400, 480, 1., model, X_scaler))
         rectangles_list.append(find_cars(feature_image, 400, 480, 1.25, model, X_scaler))
         rectangles_list.append(find_cars(feature_image, 400, 496, 1.5, model, X_scaler))
-        rectangles_list.append(find_cars(feature_image, 400, 528, 2, model, X_scaler))
-        #rectangles_list.append(find_cars(feature_image, 400, 560, 1.75, model, X_scaler))
-        #rectangles_list.append(find_cars(feature_image, 400, 528, 2, model, X_scaler))
-        #rectangles_list.append(find_cars(feature_image, 432, 560, 2, model, X_scaler))
-        #rectangles_list.append(find_cars(feature_image, 432, 624, 3, model, X_scaler))
-        rectangles_list.append(find_cars(feature_image, 400, 592, 3, model, X_scaler))
+        rectangles_list.append(find_cars(feature_image, 432, 528, 1.5, model, X_scaler))
+        rectangles_list.append(find_cars(feature_image, 432, 592, 2, model, X_scaler))
+        rectangles_list.append(find_cars(feature_image, 432, 624, 3, model, X_scaler))
         rectangles_list.append(find_cars(feature_image, 400, 656, 4, model, X_scaler))
 
         flat = [rect for rectangles in rectangles_list for rect in rectangles]
@@ -431,7 +410,7 @@ def make_pipeline(M, Minv, mtx, dist, cspace):
         heat = np.zeros_like(undistorted[:,:,0]).astype(np.float)
         flat = ring.get()
         heat = add_heat(heat, flat)
-        heat = apply_threshold(heat, 20)
+        heat = apply_threshold(heat, 17)
 
         # Visualize the heatmap when displaying
         heatmap = np.clip(heat, 0, 255)
