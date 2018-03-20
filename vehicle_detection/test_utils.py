@@ -102,7 +102,7 @@ def test_find_cars(test_img_dir, cspace):
 
         heat = np.zeros_like(image[:,:,0]).astype(np.float)
         heat = helpers.add_heat(heat, rect)
-        heat = helpers.apply_threshold(heat, 1)
+        heat = helpers.apply_threshold(heat, 2)
 
         # Visualize the heatmap when displaying
         heatmap = np.clip(heat, 0, 255)

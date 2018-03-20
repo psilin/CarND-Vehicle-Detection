@@ -35,6 +35,31 @@ The goals / steps of this project are the following:
 [image19]: ./output_images/windows_all_7.png
 [image20]: ./output_images/windows_all_8.png
 [image21]: ./output_images/windows_all_9.png
+[image22]: ./output_images/windows_trouble_YUV1.png
+[image23]: ./output_images/windows_HSV1.png
+[image24]: ./output_images/windows_HSV2.png
+[image25]: ./output_images/windows_HSV3.png
+[image26]: ./output_images/windows_HSV4.png
+[image27]: ./output_images/windows_HSV5.png
+[image28]: ./output_images/windows_HSV6.png
+[image29]: ./output_images/heat_map_1.png
+[image30]: ./output_images/heat_map_2.png
+[image31]: ./output_images/heat_map_3.png
+[image32]: ./output_images/heat_map_4.png
+[image33]: ./output_images/heat_map_5.png
+[image34]: ./output_images/heat_map_6.png
+[image35]: ./output_images/heat_threshold_1.png
+[image36]: ./output_images/heat_threshold_2.png
+[image37]: ./output_images/heat_threshold_3.png
+[image38]: ./output_images/heat_threshold_4.png
+[image39]: ./output_images/heat_threshold_5.png
+[image40]: ./output_images/heat_threshold_6.png
+[image41]: ./output_images/labels_1.png
+[image42]: ./output_images/labels_2.png
+[image43]: ./output_images/labels_3.png
+[image44]: ./output_images/labels_4.png
+[image45]: ./output_images/labels_5.png
+[image46]: ./output_images/labels_6.png
 
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/513/view) Points
@@ -71,7 +96,7 @@ to obtain parameters needed for camera calibration.
 
 #### 1. Explain how (and identify where in your code) you extracted HOG features from the training images.
 
-First of all I downloaded vehicles and non-vehicles data and stored it `vehicles` and `non-vehicles` directories. 3 typical examles of vehicle and non-vehicle are shown below.
+First of all I downloaded vehicles and non-vehicles data and stored it `vehicles` and `non-vehicles` directories (I am not providing it as it is too big, thiugh I stored final trained SVM). 3 typical examles of vehicle and non-vehicle are shown below.
 
 ![alt text][image1] ![alt text][image2] ![alt text][image3] ![alt text][image4] ![alt text][image5] ![alt text][image6] 
 
@@ -188,7 +213,7 @@ were produced by `test_features_prep()` function from `test_utils.py` file.
 
 First of all I decided to use SVM as a classifier as it was recomended so during lesson and various Slack discussions. Then I tried using `GridSearchCV()` function from `sklearn.grid_search` (code in `choose_svm()` function in `helpers.py`).
 I was choosing between `rbf` and `linear` kernels and various values for `C`. The best results I got with `rbf` kernel and `C=5` but during pipeline profiling I realized that `rbf` kernel was 2 times
-slower than `linear` kernal and as classifier decision was by far the slowest single operation in pipeline I was forced to move back to `linear` kernel. So my final parameters were `kernel=linear` and `C=10`. In the end classifier-related
+slower than `linear` kernel and as classifier decision was by far the slowest single operation in pipeline I was forced to move back to `linear` kernel. So my final parameters were `kernel=linear` and `C=10`. In the end classifier-related
 data along with scaler data was stored in `model.sv` file that was later used in pipeline construction.
 
 ### Sliding Window Search
@@ -234,40 +259,69 @@ Windows parametrs: `ystart=432`, `ystop=624`, `scale=3`.
 
 Windows parametrs: `ystart=400`, `ystop=656`, `scale=4`.
 
-I have already mentioned that my initial pipeline was very slow so one way to make it faster was to use linear kernel for SVM and the other one was to use `pix_per_cell=16` to reduce number of windows in a window raw (it reduces number of `nxblocks` in
-`find_cars()` function in `helpers.py` file). I tried to use various combination of windows to reduce false negatives (car was on image but was not found) as much as possible so I ended up with this list.
-
+I tried to use various combination of windows to reduce false negatives (car was on image but was not found) as much as possible so I ended up with this list. I noticed that a lot of small windows needed near the top
+of search area. On the other hand there was no need in large amount of big windows near the bottom of search area.
 
 #### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
-Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
+First of all I want to discuss performance of pipline here. My first pipeline implementation based on HOG + color features, and SVM with `rbf` kernel was unacceptibly slow. It took it 7 seconds to work with each frame. I switched to use `pix_per_cell=16` (to reduce ]
+number of windows in a window row (it reduces number of `nxblocks` in `find_cars()` function in `helpers.py` file)) and linear kernel. That pipeline worked on 0.5 seconds per frame speed. I removed color features from features vector as it helped me to reduce number
+of false negatives. In fact I had to reevaluate my whole feature vector at that point to obtain an acceptable solution. I decided against `HLS` color space as it gave me false negatives. Whole idea behind my pipline was to obtain a solution almost without false 
+negatives and then using filtering weight out false positives. That was the reason I dropped `LUV` and `YUV` color spaces as it gave me too much false positives on lane lines to weight it out without losing cars. Typical situation (before filtering) is on image below.
 
-![alt text][image4]
+![alt text][image22]
+
+So I chose `HSV` color space for my pipeline. Now let us discuss it in more details using test images. Images were generated with help of `test_find_cars()` function in `test_utils.py` file.
+First step was to find all windows that presumably contain car using SVM and sliding window approach. Results shown on images below.
+
+![alt text][image23] 
+![alt text][image24]
+![alt text][image25]
+![alt text][image26]
+![alt text][image27]
+![alt text][image28]
+
+As we can see there are some false positives (which is expectable as main idea was to minimize false negatives) but most of them are easy to weight out except for one in the shadows on fourth image. Now lets look at heat map of these images.
+
+![alt text][image29]
+![alt text][image30]
+![alt text][image31]
+![alt text][image32]
+![alt text][image33]
+![alt text][image34]
+
+Next step is to apply heat threshold and remove parts of images that are not hot enought (here we set threshold to 2).
+
+![alt text][image35]
+![alt text][image36]
+![alt text][image37]
+![alt text][image38]
+![alt text][image39]
+![alt text][image40]
+
+As it can be seen there are false positives still. Next step is to draw a rectangle around each hot object using `scipy.ndimage.measurements.label()` function.
+
+![alt text][image41]
+![alt text][image42]
+![alt text][image43]
+![alt text][image44]
+![alt text][image45]
+![alt text][image46]
+
+That is the end of pipeline. As we can see there are some false positives but we can address it during pipeline application to video file. 
+
 ---
 
 ### Video Implementation
 
 #### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
-Here's a [link to my video result](./project_video.mp4)
-
+Resulting video can be found in `output_project_video.mp4` file.
 
 #### 2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
 
-I recorded the positions of positive detections in each frame of the video.  From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.  
-
-Here's an example result showing the heatmap from a series of frames of video, the result of `scipy.ndimage.measurements.label()` and the bounding boxes then overlaid on the last frame of video:
-
-### Here are six frames and their corresponding heatmaps:
-
-![alt text][image5]
-
-### Here is the output of `scipy.ndimage.measurements.label()` on the integrated heatmap from all six frames:
-![alt text][image6]
-
-### Here the resulting bounding boxes are drawn onto the last frame in the series:
-![alt text][image7]
-
-
+As it was mentioned at the end of pipeline section there were false positives that needed to be weighted out. To mitigate that problem I implemented `RingBuffer` class. It can be found in `helpers.py` file. It stores data from detections on previous 7 frames. I tuned it
+so for rectangle to appear it should be detected 17 times during current frame and last 7 frames combined (`make_pipeline()` function in `helpers.py` file). That approach allowed me to exclude false positives from video although cars a tracked on almost every frame. That approach was based at the idea that car was 
+moving in a relatively slow manner across the image so it allowed me to use some memory of its locations. On the other hand, false positives appeared in different parts of image so it were weighted out by that approach.
 
 ---
 
@@ -275,5 +329,9 @@ Here's an example result showing the heatmap from a series of frames of video, t
 
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
-
+The biggest problem I faced in this project is to make my ppipeline fast enough so it can actually process a video in a resonable time. After I profiled my pipeline and found its weak spots I was forced to refactor it from top to bottom using faster but less precise
+approach. And still my approach is not real-time at all as it takes my pipeline 12 seconds to process one second of video. Second problem was that I preferd false positives to false negatives so I ended up with pipeline that should use 7 frame memory to weight out false
+positives. Maybe if I was more tolerant to false negatives and tried to balance in with false positives it would result in less memory frame that as a consequence would allow me to track cars in the image earlier. Third problem is that my pipeline sees two cars that are
+near each other as one big car. It is expected as I am not tracking a car in an intelligent manner just as a hot region on image. Maybe If I use some intelligent tracking method it would allow me to avoid using searching window method on each video frame that in turn
+would speed up my pipeline. Fourth problem is SVM + HOG approach itself. It has 98-99% accuracy on data sets yet there are a lot of false positives and false negatives during window search. It took me a lot of time to assemble all those peaces in an acceptable pipeline.
+Maybe an approach using convolutional neural network trained on cars and non-cars data sets can help improve accuracy. On the other hand, if it makes execution time of pipeline much worse then it can not be used here.

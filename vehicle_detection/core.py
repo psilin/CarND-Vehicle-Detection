@@ -24,7 +24,7 @@ def run():
 
     output_file = './../output_project_video.mp4'
     clip1 = VideoFileClip('./../project_video.mp4')
-    #clip1.save_frame('./39.0.png', 39.0)
+    #clip1.save_frame('./7.0.png', 7.0)
     #clip1 = VideoFileClip('./../project_video.mp4').subclip(20,35)
     output_clip = clip1.fl_image(pipeline)
     output_clip.write_videofile(output_file, audio=False)
