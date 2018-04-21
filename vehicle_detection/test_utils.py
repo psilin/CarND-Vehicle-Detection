@@ -2,7 +2,7 @@
 from scipy.ndimage.measurements import label
 import cv2
 import helpers
-import matplotlib
+# import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -40,9 +40,15 @@ def test_features_prep(veh_dir, non_veh_dir):
         for hog_channel in (0, 1, 2, 'ALL'):
             for orient in (6, 9, 12):
                 t1 = time.time()
-                X_train, y_train, X_test, y_test, X_scaler = helpers.prepareData(veh_dir, non_veh_dir, color_space=color_space, hog_channel=hog_channel, orient=orient)
+                (X_train, y_train, X_test, y_test,
+                    X_scaler) = helpers.prepareData(veh_dir,
+                                                    non_veh_dir,
+                                                    color_space=color_space,
+                                                    hog_channel=hog_channel,
+                                                    orient=orient)
                 t2 = time.time()
-                clf = helpers.prepare_svm(X_train, y_train, X_test, y_test, X_scaler, kernel='linear', C=10)
+                helpers.prepare_svm(X_train, y_train, X_test, y_test, X_scaler,
+                                    kernel='linear', C=10)
                 t3 = time.time()
                 print(t3 - t2, t2 - t1, hog_channel, color_space, orient)
 
@@ -52,22 +58,28 @@ def test_data_prep(veh_dir, non_veh_dir, color_space):
     @brief test of data preparation functions (trains SVM classifier)
     """
     t1 = time.time()
-    X_train, y_train, X_test, y_test, X_scaler = helpers.prepareData(veh_dir, non_veh_dir, color_space=color_space, hog_channel='ALL', orient=12)
+    (X_train, y_train, X_test, y_test,
+        X_scaler) = helpers.prepareData(veh_dir,
+                                        non_veh_dir,
+                                        color_space=color_space,
+                                        hog_channel='ALL',
+                                        orient=12)
     t2 = time.time()
     print(t2 - t1)
-    clf = helpers.prepare_svm(X_train, y_train, X_test, y_test, X_scaler)
-    #clf = helpers.choose_svm(X_train, y_train, X_test, y_test, X_scaler)
+    helpers.prepare_svm(X_train, y_train, X_test, y_test, X_scaler)
+    # helpers.choose_svm(X_train, y_train, X_test, y_test, X_scaler)
     t3 = time.time()
     print(t3 - t2)
 
 
-def test_find_cars(test_img_dir, cspace): 
+def test_find_cars(test_img_dir, cspace):
     """
     @brief test find cars
     """
     model, X_scaler = pickle.load(open('model.sv', 'rb'))
     for file in os.listdir(test_img_dir):
-        if file[0] == '.': continue
+        if file[0] == '.':
+            continue
 
         imgfile = test_img_dir + '/' + file
         print(imgfile)
@@ -86,21 +98,28 @@ def test_find_cars(test_img_dir, cspace):
         else:
             feature_image = np.copy(image)
 
-        rectangles_list = []
-        rectangles_list.append(helpers.find_cars(feature_image, 400, 480, 1., model, X_scaler))
-        rectangles_list.append(helpers.find_cars(feature_image, 400, 480, 1.25, model, X_scaler))
-        rectangles_list.append(helpers.find_cars(feature_image, 400, 496, 1.5, model, X_scaler))
-        rectangles_list.append(helpers.find_cars(feature_image, 432, 528, 1.5, model, X_scaler))
-        rectangles_list.append(helpers.find_cars(feature_image, 432, 592, 2, model, X_scaler))
-        rectangles_list.append(helpers.find_cars(feature_image, 432, 624, 3, model, X_scaler))
-        rectangles_list.append(helpers.find_cars(feature_image, 400, 656, 4, model, X_scaler))
+        rectangle_list = []
+        rectangle_list.append(
+            helpers.find_cars(feature_image, 400, 480, 1., model, X_scaler))
+        rectangle_list.append(
+            helpers.find_cars(feature_image, 400, 480, 1.25, model, X_scaler))
+        rectangle_list.append(
+            helpers.find_cars(feature_image, 400, 496, 1.5, model, X_scaler))
+        rectangle_list.append(
+            helpers.find_cars(feature_image, 432, 528, 1.5, model, X_scaler))
+        rectangle_list.append(
+            helpers.find_cars(feature_image, 432, 592, 2, model, X_scaler))
+        rectangle_list.append(
+            helpers.find_cars(feature_image, 432, 624, 3, model, X_scaler))
+        rectangle_list.append(
+            helpers.find_cars(feature_image, 400, 656, 4, model, X_scaler))
 
-        rect = [rects for rectangles in rectangles_list for rects in rectangles]
+        rect = [rects for rectangles in rectangle_list for rects in rectangles]
 
-        #for rectangle in rect:
+        # for rectangle in rect:
         #    cv2.rectangle(image,rectangle[0],rectangle[1],(0,0,255),6)
 
-        heat = np.zeros_like(image[:,:,0]).astype(np.float)
+        heat = np.zeros_like(image[:, :, 0]).astype(np.float)
         heat = helpers.add_heat(heat, rect)
         heat = helpers.apply_threshold(heat, 2)
 
@@ -121,21 +140,41 @@ def visualize_hog():
     '''
     @brief visualizes HOG features
     '''
-    files = ['./../examples/car_image1.png', './../examples/car_image2.png', './../examples/car_image3.png',\
-        './../examples/non_car_image1.png', './../examples/non_car_image2.png', './../examples/non_car_image3.png']
+    files = ['./../examples/car_image1.png',
+             './../examples/car_image2.png',
+             './../examples/car_image3.png',
+             './../examples/non_car_image1.png',
+             './../examples/non_car_image2.png',
+             './../examples/non_car_image3.png']
     for file in files:
         image = cv2.imread(file)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-        ch1 = image[:,:,0]
-        ch2 = image[:,:,1]
-        ch3 = image[:,:,2]
+        ch1 = image[:, :, 0]
+        ch2 = image[:, :, 1]
+        ch3 = image[:, :, 2]
 
-        hog1, im1 = helpers.get_hog_features(ch1, orient=12, pix_per_cell=16, cell_per_block=2, vis=True, feature_vec=False)
-        hog2, im2 = helpers.get_hog_features(ch2, orient=12, pix_per_cell=16, cell_per_block=2, vis=True, feature_vec=False)
-        hog3, im3 = helpers.get_hog_features(ch3, orient=12, pix_per_cell=16, cell_per_block=2, vis=True, feature_vec=False)
+        hog1, im1 = helpers.get_hog_features(ch1,
+                                             orient=12,
+                                             pix_per_cell=16,
+                                             cell_per_block=2,
+                                             vis=True,
+                                             feature_vec=False)
+        hog2, im2 = helpers.get_hog_features(ch2,
+                                             orient=12,
+                                             pix_per_cell=16,
+                                             cell_per_block=2,
+                                             vis=True,
+                                             feature_vec=False)
+        hog3, im3 = helpers.get_hog_features(ch3,
+                                             orient=12,
+                                             pix_per_cell=16,
+                                             cell_per_block=2,
+                                             vis=True,
+                                             feature_vec=False)
 
-        f, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(2, 3, figsize=(24, 9))
+        f, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(2, 3,
+                                                             figsize=(24, 9))
         f.tight_layout()
         ax1.imshow(ch1, cmap='gray')
         ax1.set_title('Original image channel H', fontsize=10)
@@ -166,25 +205,31 @@ def visualize_windows():
         image = cv2.imread(file)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        rectangles_list = []
-        #rectangles_list.append(helpers.find_cars(image, 400, 464, 1., model, X_scaler))
-        #rectangles_list.append(helpers.find_cars(image, 416, 480, 1., model, X_scaler))
-        #rectangles_list.append(helpers.find_cars(image, 400, 480, 1.25, model, X_scaler))
-        #rectangles_list.append(helpers.find_cars(image, 400, 496, 1.5, model, X_scaler))
-        #rectangles_list.append(helpers.find_cars(image, 432, 528, 1.5, model, X_scaler))
-        #rectangles_list.append(helpers.find_cars(image, 432, 560, 2, model, X_scaler))
-        #rectangles_list.append(helpers.find_cars(image, 464, 592, 2, model, X_scaler))
-        #rectangles_list.append(helpers.find_cars(image, 432, 624, 3, model, X_scaler))
-        rectangles_list.append(helpers.find_cars(image, 400, 656, 4, model, X_scaler))
+        rectangle_list = []
+        # rectangle_list.append(
+        #    helpers.find_cars(image, 400, 464, 1., model, X_scaler))
+        # rectangle_list.append(
+        #    helpers.find_cars(image, 416, 480, 1., model, X_scaler))
+        # rectangle_list.append(
+        #    helpers.find_cars(image, 400, 480, 1.25, model, X_scaler))
+        # rectangle_list.append(
+        #    helpers.find_cars(image, 400, 496, 1.5, model, X_scaler))
+        # rectangle_list.append(
+        #    helpers.find_cars(image, 432, 528, 1.5, model, X_scaler))
+        # rectangle_list.append(
+        #    helpers.find_cars(image, 432, 560, 2, model, X_scaler))
+        # rectangle_list.append(
+        #    helpers.find_cars(image, 464, 592, 2, model, X_scaler))
+        # rectangle_list.append(
+        #    helpers.find_cars(image, 432, 624, 3, model, X_scaler))
+        rectangle_list.append(
+            helpers.find_cars(image, 400, 656, 4, model, X_scaler))
 
-        rect = [rects for rectangles in rectangles_list for rects in rectangles]
+        rect = [rects for rectangles in rectangle_list for rects in rectangles]
 
         for rectangle in rect:
-            cv2.rectangle(image,rectangle[0],rectangle[1],(0,0,255),6)
+            cv2.rectangle(image, rectangle[0], rectangle[1], (0, 0, 255), 6)
 
         plt.imshow(image)
         plt.title('windows')
         plt.show()
-
-
-
